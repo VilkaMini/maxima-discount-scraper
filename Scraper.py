@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import numpy as np
 import string
 import pandas as pd
 from datetime import date
