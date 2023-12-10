@@ -54,7 +54,8 @@ class MaximaScraper:
         :return: df (pd.DataFrame) with processed values.
         """
         df = pd.DataFrame(data)
-        df["Image_link"] = pd.concat([df["Image_link"], df["Image_link_visible"]])
+        df.reset_index(inplace=True)
+        df["Image_link"].fillna(df["Image_link_visible"], inplace=True)
 
         df.drop(columns=["Image_link_visible"], inplace=True)
 
