@@ -5,7 +5,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import numpy as np
 import pandas as pd
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 class MaximaScraper:
 
@@ -24,7 +24,7 @@ class MaximaScraper:
         self.options.add_argument("--silent")
         self.options.add_argument("--disable-infobars")
 
-    def get_driver(self):
+    def get_driver(self) -> webdriver:
         """Gets driver for website.
 
         :return: driver (webdriver) object with preloaded maxima discount website.
@@ -40,24 +40,37 @@ class MaximaScraper:
 
         return driver
 
+    def get_upload_date(self) -> np.array:
+        """Gets the dates of the week that the scraper grabs"""
+        start = date.today() - timedelta(days=date.today().weekday())
+        end  = start + timedelta(days=6)
+        return [start, end]
+
     def upload(self, df):
         """Saves data to csv file.
 
         :param df: df (pd.DataFrame).
         """
-        df.to_csv(f"maxima-discounts/{self.date}_maxima-discounts.csv", sep=';')
 
-    def postprocessing(self, data):
+        dates = self.get_upload_date()
+        df.to_csv(f"maxima-discounts/{dates[0]}_maxima_{dates[1]}.csv", sep=';')
+
+    def postprocessing(self, data) -> pd.DataFrame:
         """Applies postprocessing to data.
 
         :param data: array with dictionaries with discount data.
         :return: df (pd.DataFrame) with processed values.
         """
         df = pd.DataFrame(data)
-        df.reset_index(inplace=True)
         df["Image_link"].fillna(df["Image_link_visible"], inplace=True)
 
         df.drop(columns=["Image_link_visible"], inplace=True)
+
+        for col in df.columns:
+            if df[col].dtype == "object":
+                print(col)
+                df[col] = df[col].str.replace("€", '').str.replace(', nuo', ' ').str.strip()
+
 
         return df
 
@@ -84,7 +97,11 @@ class MaximaScraper:
                     discount_data['Discount_icon_text'] = None
 
                 discount_data['Item_name'] = discount_item.find_element(By.TAG_NAME, value="h4").get_attribute("textContent")
-                discount_data['Item_discount_time'] = discount_item.find_element(By.CLASS_NAME, value="offer-dateTo-wrapper").get_attribute("textContent")
+
+                try:
+                    discount_data['Item_discount_time'] = discount_item.find_element(By.CLASS_NAME, value="offer-dateTo-wrapper").get_attribute("textContent")
+                except:
+                    discount_data['Item_discount_time'] = None
                 try:
                     discount_data['Discount_shop_size'] = len(discount_item.find_elements(By.CLASS_NAME, value="x-icon"))
                 except:
@@ -92,10 +109,11 @@ class MaximaScraper:
 
                 discount_data['Item_price_euro'] = discount_item.find_element(By.CLASS_NAME, value="price-eur").get_attribute("textContent")
                 discount_data['Item_price_cents'] = discount_item.find_element(By.CLASS_NAME, value="price-cents").get_attribute("textContent")
+
                 try:
-                    discount_data['Discount_text_decorator'] = discount_item.find_element(By.CLASS_NAME, value="text-decoration-line-through").get_attribute("textContent")
+                    discount_data['Item_price_before'] = discount_item.find_element(By.CLASS_NAME, value="text-decoration-line-through").get_attribute("textContent")
                 except:
-                    discount_data['Discount_text_decorator'] = None
+                    discount_data['Item_price_before'] = None
 
                 try:
                     discount_facilitator = discount_item.find_element(By.CLASS_NAME, value="offer-bottom-icon-wrapper")
