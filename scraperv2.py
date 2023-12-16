@@ -31,6 +31,7 @@ class MaximaScraper:
         """
         driver = webdriver.Chrome(options=self.options)
         driver.get("https://www.maxima.lt/akcijos")
+        print(driver.page_source)
 
         # Click cookies if applicable
         try:
