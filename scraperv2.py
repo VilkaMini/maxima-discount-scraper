@@ -31,7 +31,6 @@ class MaximaScraper:
         """
         driver = webdriver.Chrome(options=self.options)
         driver.get("https://www.maxima.lt/akcijos")
-        print(driver.page_source)
 
         # Click cookies if applicable
         try:
@@ -54,7 +53,7 @@ class MaximaScraper:
         """
 
         dates = self.get_upload_date()
-        df.to_csv(f"maxima-discounts/{dates[0]}_maxima_{dates[1]}.csv", sep=';')
+        df.to_csv(f"/home/maxima-discount-scraper/maxima-discounts/{dates[0]}_maxima_{dates[1]}.csv", sep=';')
 
     def postprocessing(self, data) -> pd.DataFrame:
         """Applies postprocessing to data.
@@ -69,7 +68,6 @@ class MaximaScraper:
 
         for col in df.columns:
             if df[col].dtype == "object":
-                print(col)
                 df[col] = df[col].str.replace("€", '').str.replace(', nuo', ' ').str.strip()
 
 
